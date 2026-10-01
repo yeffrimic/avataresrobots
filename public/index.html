@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Avatar</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="stage"></div>
+
+  <header class="topbar">
+    <div class="identity">
+      <h1 id="avatarName">Avatar</h1>
+      <span id="statePill" class="pill" data-state="idle">En espera</span>
+    </div>
+    <div class="top-actions">
+      <button id="btnLog" class="icon-btn" title="Conversación" aria-label="Conversación">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <button id="btnSettings" class="icon-btn" title="Ajustes y personalidad" aria-label="Ajustes">
+        <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M2 14h4M10 8h4M18 16h4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <aside id="logPanel" class="panel log-panel" hidden>
+    <div class="panel-head">
+      <h2>Conversación</h2>
+      <button class="icon-btn small" data-close="logPanel" aria-label="Cerrar"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div id="log" class="log"><p class="empty">Aún no han hablado.</p></div>
+  </aside>
+
+  <div id="camBox" class="cam-box" hidden>
+    <video id="camVideo" autoplay playsinline muted></video>
+    <span class="live">● Viendo</span>
+    <button id="btnFlip" class="icon-btn small" title="Cambiar de cámara" aria-label="Cambiar de cámara">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+    </button>
+  </div>
+
+  <div class="subtitles">
+    <p id="subUser" class="sub-user"></p>
+    <p id="subBot" class="sub-bot"></p>
+  </div>
+
+  <footer class="dock">
+    <div id="attachments" class="attachments"></div>
+    <div class="bar">
+      <button id="btnAttach" class="icon-btn" title="Adjuntar imagen" aria-label="Adjuntar imagen">
+        <svg viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </button>
+      <input id="fileInput" type="file" accept="image/*" multiple hidden />
+      <button id="btnCam" class="icon-btn" title="Activar cámara (que vea lo que tú ves)" aria-label="Cámara">
+        <svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      </button>
+      <form id="composer" class="composer">
+        <input id="textInput" autocomplete="off" placeholder="Escribe un mensaje…" />
+        <button class="icon-btn" type="submit" title="Enviar" aria-label="Enviar">
+          <svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/></svg>
+        </button>
+      </form>
+      <button id="btnStop" class="icon-btn stop" title="Interrumpir (Esc)" aria-label="Interrumpir" hidden>
+        <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      </button>
+      <button id="btnMic" class="mic-btn" title="Conversación por voz (manos libres)" aria-label="Micrófono">
+        <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+      </button>
+    </div>
+    <p class="hint">Micrófono = manos libres (tócalo mientras te escucha para enviar ya) · mantén <kbd>Espacio</kbd> para hablar · <kbd>Esc</kbd> interrumpe</p>
+  </footer>
+
+  <div id="dropZone" class="drop-zone" hidden><span>Suelta la imagen para mostrársela</span></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <aside id="settingsPanel" class="panel settings-panel" hidden>
+    <div class="panel-head">
+      <h2>Ajustes</h2>
+      <button class="icon-btn small" data-close="settingsPanel" aria-label="Cerrar"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="settings-body">
+      <section>
+        <h3>Personalidad</h3>
+        <label>Preajuste<select id="pSelect"></select></label>
+        <label>Nombre<input id="pName" maxlength="40" /></label>
+        <label>Cómo es y cómo habla
+          <textarea id="pPrompt" rows="8" placeholder="Describe su carácter, su forma de hablar, qué le gusta, qué sabe…"></textarea>
+        </label>
+        <label>Color del rostro<input id="pHue" type="range" min="0" max="360" step="1" /></label>
+        <div class="row">
+          <button id="pSaveNew" class="btn" type="button">Guardar como nueva</button>
+          <button id="pDelete" class="btn ghost" type="button">Eliminar</button>
+        </div>
+        <p class="note">Los cambios se aplican al instante. Al cambiar de preajuste se reinicia la conversación.</p>
+      </section>
+
+      <section>
+        <h3>Voz</h3>
+        <label>Motor de voz
+          <select data-setting="voiceEngine">
+            <option value="microsoft">Microsoft Neural (español nativo, recomendado)</option>
+            <option value="browser">Voz del navegador (depende del equipo)</option>
+            <option value="groq">Groq Orpheus (solo inglés)</option>
+          </select>
+        </label>
+        <label data-show="microsoft">Voz<select id="msVoice" data-setting="msVoice"></select></label>
+        <label data-show="browser">Voz<select id="browserVoice" data-setting="browserVoice"></select></label>
+        <label data-show="groq">Voz de Groq<input data-setting="groqVoice" list="groqVoices" /></label>
+        <datalist id="groqVoices">
+          <option value="troy"></option><option value="austin"></option><option value="daniel"></option>
+          <option value="autumn"></option><option value="diana"></option><option value="hannah"></option>
+        </datalist>
+        <label data-show="browser microsoft">Velocidad <output></output><input type="range" min="0.6" max="1.6" step="0.05" data-setting="rate" /></label>
+        <label data-show="browser microsoft">Tono <output></output><input type="range" min="0.5" max="1.8" step="0.05" data-setting="pitch" /></label>
+        <label>Idioma
+          <select data-setting="lang">
+            <option value="es-ES">Español (España)</option>
+            <option value="es-MX">Español (México)</option>
+            <option value="es-US">Español (EE. UU.)</option>
+            <option value="en-US">English (US)</option>
+            <option value="pt-BR">Português (Brasil)</option>
+            <option value="fr-FR">Français</option>
+            <option value="it-IT">Italiano</option>
+            <option value="de-DE">Deutsch</option>
+          </select>
+        </label>
+        <button id="btnTestVoice" class="btn" type="button">Probar voz</button>
+      </section>
+
+      <section>
+        <h3>Escucha y visión</h3>
+        <div class="meter-wrap">
+          <span>Nivel del micrófono</span>
+          <div class="meter"><div id="micLevel"></div><div id="micThreshold"></div></div>
+          <p id="micHint" class="note">Activa el micrófono para ver el nivel.</p>
+        </div>
+        <label>Sensibilidad del micrófono <output></output><input type="range" min="0" max="1" step="0.05" data-setting="sensitivity" /></label>
+        <label>Silencio para dar por terminada tu frase (ms) <output></output><input type="range" min="400" max="2500" step="100" data-setting="silenceMs" /></label>
+        <label class="check"><input type="checkbox" data-setting="bargeIn" /> Poder interrumpirle hablando (recomendado con auriculares)</label>
+        <label class="check"><input type="checkbox" data-setting="camEveryTurn" /> Con la cámara activa, mostrarle lo que ve en cada mensaje (si no, solo cuando digas «mira», «ves», «esto»…)</label>
+      </section>
+
+      <section>
+        <h3>Groq</h3>
+        <label>API key <span id="keyStatus" class="badge"></span>
+          <input type="password" data-setting="apiKey" placeholder="gsk_… (solo si no está en .env)" autocomplete="off" />
+        </label>
+        <label>Modelo de chat (con visión)<input data-setting="chatModel" list="modelList" /></label>
+        <label>Modelo de voz a texto<input data-setting="sttModel" list="modelList" /></label>
+        <label data-show="groq">Modelo de texto a voz<input data-setting="ttsModel" list="modelList" /></label>
+        <datalist id="modelList"></datalist>
+        <label>Creatividad (temperatura) <output></output><input type="range" min="0" max="1.5" step="0.05" data-setting="temperature" /></label>
+      </section>
+
+      <section>
+        <h3>Avatar 3D</h3>
+        <label>Modelo .glb propio (URL o ruta en /public)<input data-setting="modelUrl" placeholder="/models/cabeza.glb" /></label>
+        <div class="row">
+          <button id="btnGlb" class="btn" type="button">Abrir archivo .glb</button>
+          <button id="btnRobot" class="btn ghost" type="button">Usar el robot</button>
+        </div>
+        <input id="glbInput" type="file" accept=".glb,.gltf" hidden />
+        <p class="note">Funciona con cabezas que tengan blendshapes ARKit (jawOpen, mouthFunnel…) u Oculus visemes (viseme_aa…).</p>
+      </section>
+
+      <section>
+        <button id="btnClear" class="btn danger" type="button">Borrar conversación</button>
+      </section>
+    </div>
+  </aside>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

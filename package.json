@@ -1,0 +1,14 @@
+{
+  "name": "avatar-groq",
+  "version": "1.0.0",
+  "description": "Avatar 3D conversacional por voz con visión, impulsado por Groq",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "cert": "node gen-cert.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
