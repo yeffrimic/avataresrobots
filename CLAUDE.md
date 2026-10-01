@@ -23,7 +23,7 @@ En Pop!_OS, el Node de `apt` es viejo: instalar Node 22 con NodeSource (ver READ
 - `public/js/mic.js`: VAD propio con un AudioWorklet y pre-roll de 0.4 s. Entrega WAV de 16 kHz. Incluye pulsar-para-hablar (Espacio) y `finishNow()`.
 - `public/js/lipsync.js`: texto → visemas en español (A/E/I/O/U/M/F/C). Con audio, se ajusta a la duración real y la boca sigue el volumen.
 - `public/js/speech.js`: cola de voz con tres motores, `microsoft` (por defecto), `browser` y `groq` (Orpheus, solo inglés). Si falla el motor elegido, pasa a la voz del navegador.
-- `public/js/personalities.js`: personalidades predefinidas.
+- `public/js/personalities.js`: personalidades predefinidas. **Juan** es la primera, así que sale por defecto en instalaciones nuevas: co-presentador de la charla de Yeffri para niños y jóvenes en Guatemala, con voz `es-GT-AndresNeural`. Su prompt lo escribió el usuario; no cambiar los datos de «Lo que sabes» sin pedirlo. El campo opcional `msVoice` de una personalidad cambia la voz al elegirla.
 
 ## Decisiones y lecciones (no repetir errores)
 

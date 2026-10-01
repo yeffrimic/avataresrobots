@@ -138,6 +138,7 @@ $('#pSelect').addEventListener('change', (e) => {
   settings.personality = { ...p };
   if (p.rate) settings.rate = p.rate;
   if (p.pitch) settings.pitch = p.pitch;
+  if (p.msVoice) settings.msVoice = p.msVoice;
   saveSettings();
   applyPersonality();
   syncSettingsUI();
@@ -148,7 +149,7 @@ $('#pPrompt').addEventListener('input', (e) => { settings.personality.prompt = e
 $('#pHue').addEventListener('input', (e) => { settings.personality.hue = Number(e.target.value); onPersonalityEdited(); });
 
 $('#pSaveNew').addEventListener('click', () => {
-  const p = { ...settings.personality, id: `custom-${Date.now()}`, rate: settings.rate, pitch: settings.pitch };
+  const p = { ...settings.personality, id: `custom-${Date.now()}`, rate: settings.rate, pitch: settings.pitch, msVoice: settings.msVoice };
   customs.push(p);
   settings.personality = { ...p };
   saveCustoms();
