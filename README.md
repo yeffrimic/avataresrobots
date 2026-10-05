@@ -2,6 +2,29 @@
 
 Una cabeza robot en 3D, flotando en el espacio, con la que hablas por voz. Puede ver por tu cámara, mirar las imágenes que le pases y mueve los labios al hablar. Puedes cambiarle la personalidad desde la interfaz.
 
+## Índice
+
+- [Requisitos](#requisitos)
+- [Arranque](#arranque)
+- [Uso](#uso)
+- [Personalidad](#personalidad)
+- [Cómo funciona](#cómo-funciona)
+  - [Sincronización labial](#sincronización-labial)
+  - [Modelos](#modelos)
+- [Usar tu propia cabeza 3D](#usar-tu-propia-cabeza-3d)
+- [Plataformas](#plataformas)
+  - [Desde el móvil](#desde-el-móvil)
+- [Solución de problemas](#solución-de-problemas)
+
+## Requisitos
+
+- **Node.js 22 o superior** en el equipo que hace de servidor. No hay dependencias que instalar.
+- **Una clave de Groq**, gratis en https://console.groq.com/keys. No viene incluida: cada quien usa la suya.
+- **Un navegador:** Firefox 112+, Chrome o Edge 99+, o Safari 16.4+ (iPhone con iOS 16.4+). Necesita WebGL 2.
+- **Un PC modesto:** 2 núcleos, 4 GB de RAM y gráfica integrada tipo Intel HD 620 o AMD Vega 8. Lo recomendado son 8 GB.
+- **Micrófono**, y webcam si quieres que vea.
+- **Conexión a internet:** Groq, la voz de Microsoft y Three.js funcionan por internet. Basta con 1 Mbps estable.
+
 ## Arranque
 
 1. Necesitas **Node.js 22 o superior**. No hay que instalar dependencias. En Pop!_OS o Ubuntu, el Node de `apt` suele ser antiguo; instálalo así:
@@ -33,7 +56,9 @@ Mientras el avatar habla, el micrófono se silencia para que no se escuche a sí
 ## Personalidad
 
 - **Desde la interfaz:** abre Ajustes → Personalidad. Ahí cambias el nombre, la descripción y el color, y puedes guardar la personalidad como nueva. Todo se guarda en el navegador.
-- **Desde el código:** edita `public/js/personalities.js`. Cada personalidad es un bloque de texto.
+- **Desde el código:** edita `public/js/personalities.js`. Cada personalidad es un bloque de texto y puede tener su propia voz (`msVoice`).
+
+Vienen incluidas: **Juan** (co-presentador guatemalteco para charlas con niños y jóvenes, con voz de Guatemala), Nova, Profe Chispa, Capitán Sarcasmo, Zen y Ojo de Halcón.
 
 El avatar puede mostrar emociones (feliz, triste, sorprendido, pensativo, enojado). El modelo las marca con etiquetas como `[feliz]`, que no se leen en voz alta.
 
@@ -97,3 +122,13 @@ Abre esa dirección en el móvil. Saldrá un aviso de seguridad porque el certif
 **B. Con un túnel** (enlace HTTPS válido, también sirve fuera de tu red): `cloudflared tunnel --url http://localhost:3000`. Cualquiera que tenga el enlace podrá usar tu avatar y tu clave de Groq, así que ciérralo al terminar.
 
 En el móvil no hay tecla Espacio: usa el botón del micrófono para hablar con las manos libres.
+
+## Solución de problemas
+
+| Síntoma | Qué hacer |
+|---|---|
+| Se queda en «Te escucho…» | Toca el micrófono o pulsa Espacio para enviar lo grabado. Para ver qué capta el micrófono, abre `http://localhost:3000/?debug` o mira el medidor en Ajustes → Escucha y visión. |
+| Nunca pasa a «Te escucho…» | Sube la sensibilidad en Ajustes. Revisa en el candado de la barra de direcciones que el navegador use el micrófono correcto. |
+| «Voz Microsoft 405» | El servidor que está corriendo es una versión vieja. Reinícialo (Ctrl+C y `npm start`). |
+| «Groq 429» o «límite por minuto» | El plan gratuito de Groq limita los tokens por minuto, y cada imagen gasta bastante. Espera unos segundos. |
+| «El modelo … no existe» | Groq retira modelos de vez en cuando. La app elige otro sola; también puedes cambiarlo en Ajustes → Groq. |
