@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Avatares Robots · Juan</title>
+  <meta name="description" content="Un avatar 3D que te escucha, te ve y te responde en español, con labios sincronizados. Hecho con Groq y Three.js." />
+  <meta property="og:title" content="Avatares Robots · Un avatar 3D que conversa en español" />
+  <meta property="og:description" content="Te escucha, te ve por la cámara y te responde con voz y labios sincronizados. Código abierto." />
+  <meta property="og:image" content="assets/app.jpg" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='17' r='13' fill='%23e8ecf4'/%3E%3Crect x='7' y='10' width='18' height='14' rx='6' fill='%2305070d'/%3E%3Crect x='10.5' y='13' width='3' height='5' rx='1.5' fill='%2366d9ff'/%3E%3Crect x='18.5' y='13' width='3' height='5' rx='1.5' fill='%2366d9ff'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #03050c;
+      --bg-2: #070b18;
+      --card: rgb(255 255 255 / 0.035);
+      --line: rgb(255 255 255 / 0.09);
+      --text: #e9edf7;
+      --muted: #8f99b2;
+      --accent: #5fd4ff;
+      --accent-2: #7c8cff;
+      --accent-soft: rgb(95 212 255 / 0.12);
+      --radius: 20px;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    body::before { /* estrellas de fondo */
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(1px 1px at 12% 22%, #fff9 50%, transparent),
+        radial-gradient(1px 1px at 78% 12%, #fff8 50%, transparent),
+        radial-gradient(1.5px 1.5px at 42% 68%, #fff6 50%, transparent),
+        radial-gradient(1px 1px at 88% 58%, #fff7 50%, transparent),
+        radial-gradient(1px 1px at 22% 88%, #fff5 50%, transparent),
+        radial-gradient(1.5px 1.5px at 62% 36%, #fff5 50%, transparent),
+        radial-gradient(1200px 700px at 70% -10%, rgb(60 120 255 / 0.13), transparent 70%),
+        radial-gradient(900px 600px at 0% 40%, rgb(95 212 255 / 0.07), transparent 70%);
+    }
+    a { color: inherit; }
+    svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .wrap { width: min(1160px, 100% - 32px); margin-inline: auto; }
+    h1, h2, h3 { font-family: "Space Grotesk", Inter, sans-serif; letter-spacing: -0.01em; margin: 0; }
+    h2 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--accent);
+    }
+    .eyebrow::before { content: ""; width: 18px; height: 2px; background: currentColor; border-radius: 2px; }
+    .lead { color: var(--muted); font-size: 18px; max-width: 60ch; }
+    section { padding: clamp(64px, 9vw, 110px) 0; }
+    .section-head { display: grid; gap: 14px; margin-bottom: 44px; max-width: 720px; }
+
+    /* ---------- Navegación ---------- */
+    .nav {
+      position: sticky; top: 0; z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgb(3 5 12 / 0.7);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font: 700 18px "Space Grotesk", sans-serif; text-decoration: none; }
+    .brand-dot {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff, #c9d0dc 60%, #8a93a6);
+      box-shadow: 0 0 16px rgb(95 212 255 / 0.5);
+      position: relative;
+    }
+    .brand-dot::after { content: ""; position: absolute; inset: 8px 5px 7px; border-radius: 6px; background: #05070d; box-shadow: inset 0 0 6px var(--accent); }
+    .nav-links { display: flex; gap: 26px; font-size: 14.5px; color: var(--muted); }
+    .nav-links a { text-decoration: none; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--text); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 12px 20px; border-radius: 12px;
+      font-weight: 600; font-size: 15px; text-decoration: none;
+      border: 1px solid transparent; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s, border-color 0.15s;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      color: #03111a;
+      background: linear-gradient(135deg, #7fe0ff, #5fb6ff);
+      box-shadow: 0 6px 24px rgb(95 190 255 / 0.35);
+    }
+    .btn-primary:hover { box-shadow: 0 10px 32px rgb(95 190 255 / 0.5); }
+    .btn-ghost { color: var(--text); background: var(--card); border-color: var(--line); }
+    .btn-ghost:hover { border-color: rgb(255 255 255 / 0.22); }
+    .btn-sm { padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+
+    /* ---------- Portada ---------- */
+    .hero { padding-top: clamp(36px, 6vw, 72px); }
+    .hero .wrap { display: grid; grid-template-columns: 1fr 1.08fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+    .hero h1 { font-size: clamp(38px, 5.6vw, 64px); line-height: 1.04; margin: 18px 0 20px; }
+    .hero h1 em { font-style: normal; background: linear-gradient(120deg, #8fe6ff, #7c8cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+    .chip { padding: 5px 11px; border-radius: 999px; font-size: 13px; color: var(--muted); border: 1px solid var(--line); background: var(--card); }
+
+    .stage-card {
+      position: relative;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid rgb(95 212 255 / 0.25);
+      background: #02040a;
+      box-shadow: 0 30px 80px rgb(0 0 0 / 0.6), 0 0 60px rgb(95 212 255 / 0.12);
+    }
+    #stage { height: clamp(420px, 52vw, 600px); }
+    /* El renderizador fija el ancho en píxeles: forzamos que se adapte a su caja */
+    #stage canvas { display: block; width: 100% !important; height: 100% !important; }
+    .hero .wrap > *, .juan > *, .install > * { min-width: 0; }
+    .live {
+      position: absolute; top: 16px; left: 16px;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 12px; border-radius: 999px;
+      font-size: 12.5px; font-weight: 600;
+      background: rgb(3 5 12 / 0.6); border: 1px solid var(--line); backdrop-filter: blur(8px);
+    }
+    .live i { width: 7px; height: 7px; border-radius: 50%; background: #5fffa0; box-shadow: 0 0 8px #5fffa0; animation: blink 1.6s infinite; }
+    .live[data-state="thinking"] i { background: #ffc35f; box-shadow: 0 0 8px #ffc35f; }
+    .live[data-state="speaking"] i { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    @keyframes blink { 50% { opacity: 0.35; } }
+    .bubble {
+      position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+      width: min(88%, 520px);
+      padding: 12px 18px; border-radius: 16px;
+      text-align: center; font-size: 16px; font-weight: 500;
+      background: rgb(3 5 12 / 0.7); border: 1px solid var(--line); backdrop-filter: blur(10px);
+      min-height: 50px;
+      transition: opacity 0.35s;
+    }
+    .bubble:empty { opacity: 0; }
+    .controls {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+      margin-top: 14px;
+    }
+    .emos { display: flex; flex-wrap: wrap; gap: 6px; }
+    .emo {
+      padding: 7px 12px; border-radius: 10px;
+      font: 500 13.5px Inter, sans-serif; color: var(--muted);
+      background: var(--card); border: 1px solid var(--line); cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .emo:hover, .emo.on { color: var(--text); border-color: rgb(95 212 255 / 0.5); background: var(--accent-soft); }
+    .sound { display: inline-flex; align-items: center; gap: 8px; }
+    .controls-note { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+
+    /* ---------- Funciones ---------- */
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card {
+      padding: 26px;
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid var(--line);
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover { border-color: rgb(95 212 255 / 0.3); transform: translateY(-2px); }
+    .card .ico {
+      display: grid; place-items: center;
+      width: 46px; height: 46px; margin-bottom: 18px;
+      border-radius: 14px; color: var(--accent);
+      background: var(--accent-soft); border: 1px solid rgb(95 212 255 / 0.2);
+    }
+    .card h3 { font-size: 19px; margin-bottom: 8px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+    /* ---------- Juan ---------- */
+    .juan { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 60px); align-items: center; }
+    .quotes { display: grid; gap: 12px; }
+    .quote {
+      position: relative;
+      padding: 16px 20px 16px 22px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgb(95 212 255 / 0.08), rgb(124 140 255 / 0.05));
+      border: 1px solid var(--line);
+      font-size: 16.5px;
+    }
+    .quote::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 3px; background: var(--accent); }
+    .quote small { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }
+    .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
+    .fact { padding: 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+    .fact b { display: block; font: 700 26px "Space Grotesk", sans-serif; color: var(--accent); }
+    .fact span { font-size: 13.5px; color: var(--muted); }
+
+    /* ---------- Cómo funciona ---------- */
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; position: relative; }
+    .step {
+      position: relative;
+      padding: 22px 18px;
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid var(--line);
+      text-align: center;
+    }
+    .step:not(:last-child)::after {
+      content: "→"; position: absolute; right: -14px; top: 50%; transform: translate(50%, -50%);
+      color: var(--accent); font-size: 18px; z-index: 1;
+    }
+    .step .n { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font: 700 14px "Space Grotesk"; color: #03111a; background: var(--accent); margin-bottom: 12px; }
+    .step h3 { font-size: 16.5px; margin-bottom: 6px; }
+    .step p { margin: 0; font-size: 13.5px; color: var(--muted); }
+    .step code { font-size: 12px; color: var(--text); }
+
+    .shot { margin-top: 56px; border-radius: 24px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 30px 80px rgb(0 0 0 / 0.5); }
+    .shot img { display: block; width: 100%; height: auto; }
+    .shot-cap { margin: 14px 0 0; text-align: center; color: var(--muted); font-size: 14px; }
+
+    /* ---------- Instalar ---------- */
+    .install { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: start; }
+    pre {
+      margin: 0; padding: 22px 24px;
+      border-radius: var(--radius);
+      background: #060912; border: 1px solid var(--line);
+      font: 14px/1.75 ui-monospace, "SF Mono", Consolas, monospace;
+      overflow-x: auto; color: #cfe6ff;
+    }
+    pre .c { color: #5c6a88; }
+    pre .p { color: var(--accent); user-select: none; }
+    .req { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .req li { display: flex; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); font-size: 15px; }
+    .req li svg { flex: none; color: var(--accent); margin-top: 2px; }
+    .req b { color: var(--text); }
+    .req span { color: var(--muted); }
+
+    /* ---------- Pie ---------- */
+    footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+    footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: center; }
+    footer a { color: var(--text); }
+
+    /* ---------- Responsivo ---------- */
+    @media (max-width: 960px) {
+      .hero .wrap, .juan, .install { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .flow { grid-template-columns: 1fr; }
+      .step:not(:last-child)::after { content: "↓"; right: 50%; top: auto; bottom: -14px; transform: translate(50%, 50%); }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .grid, .facts { grid-template-columns: 1fr; }
+      .bubble { font-size: 14.5px; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap">
+      <a class="brand" href="#"><span class="brand-dot"></span>Avatares Robots</a>
+      <div class="nav-links">
+        <a href="#funciones">Funciones</a>
+        <a href="#juan">Juan</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#instalar">Instalar</a>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="https://github.com/yeffrimic/avataresrobots">
+        <svg class="i" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">Proyecto abierto · Groq + Three.js</span>
+        <h1>Un avatar 3D que <em>te escucha, te ve</em> y te responde en español.</h1>
+        <p class="lead">Una cabeza robot flotando en el espacio con la que conversas por voz. Mira por tu cámara, entiende las imágenes que le muestras y habla con labios sincronizados. Su personalidad se cambia en segundos.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#instalar">
+            <svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+            Instálalo en 2 minutos
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/yeffrimic/avataresrobots">Ver el código</a>
+        </div>
+        <div class="chips">
+          <span class="chip">Voz a texto con Whisper</span>
+          <span class="chip">Visión con Qwen</span>
+          <span class="chip">45 voces en español</span>
+          <span class="chip">Sin dependencias</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="stage-card">
+          <div id="stage" aria-label="Avatar 3D en vivo"></div>
+          <span class="live" id="live" data-state="listening"><i></i><span id="liveText">En vivo</span></span>
+          <p class="bubble" id="bubble"></p>
+        </div>
+        <div class="controls">
+          <div class="emos" role="group" aria-label="Cambiar emoción">
+            <button class="emo" data-emo="feliz">Feliz</button>
+            <button class="emo" data-emo="sorprendido">Sorprendido</button>
+            <button class="emo" data-emo="pensativo">Pensativo</button>
+            <button class="emo" data-emo="triste">Triste</button>
+            <button class="emo" data-emo="enojado">Enojado</button>
+          </div>
+          <button class="btn btn-ghost btn-sm sound" id="btnSound" aria-pressed="false">
+            <svg class="i" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+            <span>Activar voz</span>
+          </button>
+        </div>
+        <p class="controls-note">Es el avatar real, no un video: mueve el ratón y te sigue con la mirada.</p>
+      </div>
+    </div>
+  </header>
+
+  <section id="funciones">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Funciones</span>
+        <h2>Todo lo que necesita un compañero digital en tarima</h2>
+        <p class="lead">Pensado para charlas, aulas y demostraciones en vivo: funciona en cualquier computadora con navegador, incluso en el celular.</p>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <div class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg></div>
+          <h3>Conversación por voz</h3>
+          <p>Le hablas con las manos libres: detecta cuándo terminas tu frase, la transcribe y empieza a contestar desde la primera oración.</p>
+        </article>
+        <article class="card">
+          <div class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <h3>Ve lo que tú ves</h3>
+          <p>Con la cámara activa mira lo que le enseñas. También entiende fotos que arrastras o pegas, y puede leer textos e identificar objetos.</p>
+        </article>
+        <article class="card">
+          <div class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M4 12c2.5-3 5-4.5 8-4.5s5.5 1.5 8 4.5c-2.5 3-5 4.5-8 4.5S6.5 15 4 12Z"/><path d="M4 12h16"/></svg></div>
+          <h3>Labios sincronizados</h3>
+          <p>Las formas de la boca están pensadas para el español (a, e, i, o, u, m, f…) y siguen la duración y el volumen reales de la voz.</p>
+        </article>
+        <article class="card">
+          <div class="ico"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></div>
+          <h3>Emociones</h3>
+          <p>Se pone feliz, triste, sorprendido, pensativo o enojado según lo que dice, y mira hacia arriba cuando está pensando.</p>
+        </article>
+        <article class="card">
+          <div class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+          <h3>Personalidad editable</h3>
+          <p>Nombre, carácter, color y voz se cambian desde la interfaz sin tocar código. Trae seis personalidades listas para usar.</p>
+        </article>
+        <article class="card">
+          <div class="ico"><svg class="i" viewBox="0 0 24 24"><rect x="2" y="4" width="14" height="10" rx="2"/><rect x="17" y="8" width="5" height="12" rx="1.5"/><path d="M6 18h6"/></svg></div>
+          <h3>Cualquier plataforma</h3>
+          <p>Linux, Windows o Mac con Firefox, Chrome, Edge o Safari, y también Android y iPhone. Voces nativas de 22 países hispanohablantes.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="juan" style="background: linear-gradient(180deg, transparent, var(--bg-2) 30%, var(--bg-2) 70%, transparent);">
+    <div class="wrap juan">
+      <div>
+        <span class="eyebrow">Conoce a Juan</span>
+        <h2 style="margin: 14px 0 16px;">El único Juan que vive en una computadora</h2>
+        <p class="lead">Juan es el co-presentador digital de <b style="color: var(--text)">Yeffri Salazar (Yeffrimic)</b> en charlas para niños y jóvenes de 10 a 17 años. Es bromista, rápido y un poco sabiondo, habla como guatemalteco y tiene una misión: inspirar a los patojos a entrar a la tecnología.</p>
+        <div class="facts">
+          <div class="fact"><b>10–17</b><span>años, el público de la charla</span></div>
+          <div class="fact"><b>20 min</b><span>de charla en vivo, a dos voces</span></div>
+          <div class="fact"><b>Chapín</b><span>voz y modismos de Guatemala</span></div>
+        </div>
+      </div>
+      <div class="quotes">
+        <div class="quote">«Buenas, patojos. Soy Juan. Sí, como su tío, su vecino y medio salón… pero yo soy el único que vive en una computadora.»<small>Al abrir la charla</small></div>
+        <div class="quote">«¿Entonces vos enseñabas antes de tener el título? ¡Te saltaste la fila!»<small>Picando a Yeffri</small></div>
+        <div class="quote">«Me pusieron Juan porque cualquiera puede ser como yo… pero ustedes pueden ser mejores: ustedes pueden crear uno.»<small>Al cerrar</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Cómo funciona</span>
+        <h2>De tu voz a su voz en un par de segundos</h2>
+        <p class="lead">Un servidor Node sin dependencias protege la clave de Groq y genera la voz. El navegador hace todo lo demás.</p>
+      </div>
+      <div class="flow">
+        <div class="step"><span class="n">1</span><h3>Te escucha</h3><p>Un detector de voz propio graba tu frase y sabe cuándo terminaste.</p></div>
+        <div class="step"><span class="n">2</span><h3>Transcribe</h3><p>Whisper en Groq convierte tu voz en texto en menos de un segundo.</p></div>
+        <div class="step"><span class="n">3</span><h3>Piensa y mira</h3><p>Un modelo con visión responde, usando la foto de la cámara si hace falta.</p></div>
+        <div class="step"><span class="n">4</span><h3>Habla</h3><p>Voces neuronales en español, frase por frase mientras sigue pensando.</p></div>
+        <div class="step"><span class="n">5</span><h3>Se expresa</h3><p>Labios, ojos y emociones en una escena 3D con <code>Three.js</code>.</p></div>
+      </div>
+      <figure class="shot" style="margin-inline: 0;">
+        <img src="assets/app.jpg" width="1600" height="900" loading="lazy" alt="La aplicación: la cabeza robot de Juan sobre una base holográfica, con la barra para escribir, adjuntar imágenes, activar la cámara y el micrófono." />
+      </figure>
+      <p class="shot-cap">La app: micrófono manos libres, cámara, imágenes y personalidad desde Ajustes.</p>
+    </div>
+  </section>
+
+  <section id="instalar">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Instalar</span>
+        <h2>Listo en 2 minutos</h2>
+        <p class="lead">Solo necesitas Node.js y una clave gratuita de Groq. No hay nada más que instalar.</p>
+      </div>
+      <div class="install">
+        <pre><span class="c"># 1. Descarga el proyecto</span>
+<span class="p">$ </span>git clone https://github.com/yeffrimic/avataresrobots
+<span class="p">$ </span>cd avataresrobots
+
+<span class="c"># 2. Pon tu clave de console.groq.com/keys</span>
+<span class="p">$ </span>cp .env.example .env
+
+<span class="c"># 3. Arranca y abre http://localhost:3000</span>
+<span class="p">$ </span>npm start
+
+<span class="c"># Opcional: usarlo desde el celular (HTTPS en tu red)</span>
+<span class="p">$ </span>npm run cert</pre>
+        <ul class="req">
+          <li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><div><b>Node.js 22 o superior</b><br /><span>En el equipo que hace de servidor.</span></div></li>
+          <li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><div><b>Navegador moderno</b><br /><span>Firefox 112+, Chrome o Edge 99+, Safari 16.4+.</span></div></li>
+          <li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><div><b>PC modesta</b><br /><span>2 núcleos, 4 GB de RAM y gráfica integrada.</span></div></li>
+          <li><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><div><b>Micrófono e internet</b><br /><span>Webcam opcional, para que vea.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>Hecho por <a href="https://github.com/yeffrimic">Yeffri Salazar · Yeffrimic</a> en Guatemala.</span>
+      <span>Código abierto en <a href="https://github.com/yeffrimic/avataresrobots">GitHub</a> · Groq · Three.js</span>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { Avatar } from './public/js/avatar.js';
+    import { LipSync, buildTimeline } from './public/js/lipsync.js';
+    import { Speaker } from './public/js/speech.js';
+
+    const $ = (s) => document.querySelector(s);
+    const stage = $('#stage');
+    const avatar = new Avatar(stage);
+    avatar.setHue(200);
+    // En una página que se desplaza, la cabeza no debe atrapar la rueda ni el dedo
+    avatar.controls.enabled = false;
+    avatar.renderer.domElement.style.touchAction = 'pan-y';
+
+    // Solo dibujar mientras se ve, para no gastar batería
+    new IntersectionObserver(([e]) => {
+      avatar.renderer.setAnimationLoop(e.isIntersecting ? () => avatar._tick() : null);
+    }).observe(stage);
+
+    const lipsync = new LipSync(avatar);
+    const voice = { voiceEngine: 'browser', lang: 'es-MX', rate: 1.05, pitch: 1, browserVoice: '' };
+    const speaker = new Speaker({ lipsync, settings: () => voice });
+    speaker.onitemstart = (item) => { if (item.emotion) avatar.setEmotion(item.emotion, 5); };
+
+    const LINES = [
+      { text: 'Buenas, patojos. Soy Juan, el único Juan que vive en una computadora.', emotion: 'feliz' },
+      { text: 'Te escucho, te veo por la cámara y te respondo con mi propia voz.' },
+      { text: '¿Un satélite? ¡Ni yo he ido al espacio todavía!', emotion: 'sorprendido' },
+      { text: 'Puedo ser tutor, explorador o presentador. Mi personalidad se cambia en segundos.', emotion: 'pensativo' },
+      { text: 'Me pusieron Juan porque cualquiera puede ser como yo… pero ustedes pueden crear uno.', emotion: 'feliz' },
+    ];
+    const LIVE = { listening: 'Escuchando', thinking: 'Pensando…', speaking: 'Hablando' };
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    let soundOn = false;
+
+    function setState(s) {
+      avatar.setState(s);
+      $('#live').dataset.state = s;
+      $('#liveText').textContent = LIVE[s];
+    }
+
+    async function say({ text, emotion }) {
+      setState('speaking');
+      $('#bubble').textContent = text;
+      if (soundOn && globalThis.speechSynthesis) {
+        speaker.enqueue(text, emotion);
+        await speaker.waitIdle();
+      } else {
+        if (emotion) avatar.setEmotion(emotion, 5);
+        const rate = 1.05;
+        lipsync.start({ text, rate });
+        await wait((buildTimeline(text).total * 0.075 / rate) * 1000 + 300);
+        lipsync.stop();
+      }
+    }
+
+    // Demostración en bucle: escucha → piensa → habla
+    (async function loop() {
+      for (let i = 0; ; i = (i + 1) % LINES.length) {
+        setState('listening');
+        await wait(1600);
+        setState('thinking');
+        $('#bubble').textContent = '';
+        await wait(1100);
+        await say(LINES[i]);
+        await wait(1800);
+        $('#bubble').textContent = '';
+      }
+    })();
+
+    // Botones de emoción
+    document.querySelectorAll('.emo').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('.emo').forEach((x) => x.classList.toggle('on', x === b));
+      avatar.setEmotion(b.dataset.emo, 4);
+      setTimeout(() => b.classList.remove('on'), 4000);
+    }));
+
+    // Voz opcional (usa la voz del navegador: la app real usa voces neuronales en el servidor)
+    $('#btnSound').addEventListener('click', (e) => {
+      soundOn = !soundOn;
+      const btn = e.currentTarget;
+      btn.setAttribute('aria-pressed', soundOn);
+      btn.querySelector('span').textContent = soundOn ? 'Silenciar' : 'Activar voz';
+      if (!soundOn) speaker.stop();
+      else speaker.unlock();
+    });
+  </script>
+</body>
+</html>

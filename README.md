@@ -2,6 +2,10 @@
 
 Una cabeza robot en 3D, flotando en el espacio, con la que hablas por voz. Puede ver por tu cámara, mirar las imágenes que le pases y mueve los labios al hablar. Puedes cambiarle la personalidad desde la interfaz.
 
+**[Ver la página del proyecto, con el avatar en vivo →](https://yeffrimic.github.io/avataresrobots/)**
+
+![La app: la cabeza robot de Juan sobre una base holográfica](assets/app.jpg)
+
 ## Índice
 
 - [Requisitos](#requisitos)
