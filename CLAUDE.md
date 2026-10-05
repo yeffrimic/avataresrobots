@@ -25,6 +25,8 @@ En Pop!_OS, el Node de `apt` es viejo: instalar Node 22 con NodeSource (ver READ
 - `public/js/speech.js`: cola de voz con tres motores, `microsoft` (por defecto), `browser` y `groq` (Orpheus, solo inglés). Si falla el motor elegido, pasa a la voz del navegador.
 - `public/js/personalities.js`: personalidades predefinidas. **Juan** es la primera, así que sale por defecto en instalaciones nuevas: co-presentador de la charla de Yeffri para niños y jóvenes en Guatemala, con voz `es-GT-AndresNeural`. Su prompt lo escribió el usuario; no cambiar los datos de «Lo que sabes» sin pedirlo. El campo opcional `msVoice` de una personalidad cambia la voz al elegirla.
 
+- `index.html` (en la raíz) + `assets/` + `.nojekyll`: página de presentación pública en GitHub Pages (https://yeffrimic.github.io/avataresrobots/), servida desde `main`, en `/`. Importa `public/js/avatar.js`, `lipsync.js` y `speech.js` para mostrar la cabeza en vivo hablando en bucle, sin servidor. Si cambia la API de esos módulos, revisa que la página siga funcionando. El repo es **público**.
+
 ## Decisiones y lecciones (no repetir errores)
 
 - **Modelos de Groq:** Llama 4 Scout ya no existe. El de chat con visión es `qwen/qwen3.8-27b`. Al arrancar, `checkModels()` cambia solo a otro modelo si el guardado desaparece.
