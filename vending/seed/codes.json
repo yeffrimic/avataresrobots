@@ -1,4 +1,0 @@
-[
-  { "code": "1234", "balance": 10000, "note": "Tarjeta de prueba con Q100", "singleUse": false, "active": true },
-  { "code": "2026", "balance": 2000, "note": "Vale de un solo uso por Q20", "singleUse": true, "active": true }
-]

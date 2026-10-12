@@ -130,14 +130,14 @@ En el móvil no hay tecla Espacio: usa el botón del micrófono para hablar con 
 
 ## Modo máquina expendedora
 
-El avatar puede ser **el encargado de una máquina de snacks y bebidas**. Toda la logística (catálogo, existencias, cobro con código, despacho por Arduino, ventas) vive en un sistema aparte, en [`vending/`](vending/README.md). El avatar solo escucha al cliente, le pasa el texto a ese sistema y dice lo que este responde, con un ticket del pedido en pantalla. El sistema está diseñado para no inventar precios, productos ni datos.
+El avatar puede ser **el cajero de una máquina de snacks y bebidas**. Conversa con el cliente, arma el pedido y se lo envía por API a **tu programa de inventario**, que es quien cobra y despacha. Luego anuncia lo que tu programa le responda: pago confirmado, entregado o falló. Muestra el pedido en pantalla y está diseñado para no inventar precios, productos ni datos.
 
 ```
-cd vending && npm start      # sistema de la máquina en :4000 (panel en /admin)
-npm start                    # el avatar, con VENDING_URL=http://localhost:4000 en .env
+cd cajero && npm start       # el cajero en :4000
+npm start                    # el avatar, con CAJERO_URL=http://localhost:4000 en .env
 ```
 
-Todos los detalles están en [vending/README.md](vending/README.md).
+La API que tu programa necesita está en [cajero/API.md](cajero/API.md), y todos los detalles en [cajero/README.md](cajero/README.md). Para probar sin tu programa, hay un simulador incluido.
 
 ## Solución de problemas
 

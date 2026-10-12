@@ -1,0 +1,313 @@
+[
+  {
+    "id": "tortrix",
+    "nombre": "Tortrix Limón",
+    "precio": 4,
+    "existencias": 6,
+    "categoria": "chips",
+    "alias": [
+      "tortrix",
+      "tortrixs",
+      "tortris"
+    ],
+    "tamano": "bolsa pequeña",
+    "descripcion": "Tortillitas de maíz con sabor a limón.",
+    "etiquetas": [
+      "salado",
+      "limón",
+      "crujiente"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "A1"
+  },
+  {
+    "id": "doritos",
+    "nombre": "Doritos Nacho",
+    "precio": 6,
+    "existencias": 7,
+    "categoria": "chips",
+    "alias": [
+      "doritos",
+      "dorito"
+    ],
+    "tamano": "bolsa pequeña",
+    "descripcion": "Tostitos de maíz sabor queso.",
+    "etiquetas": [
+      "salado",
+      "queso",
+      "crujiente"
+    ],
+    "alergenos": [],
+    "destacado": true,
+    "casilla": "A2"
+  },
+  {
+    "id": "ricitos",
+    "nombre": "Ricitos",
+    "precio": 3,
+    "existencias": 5,
+    "categoria": "chips",
+    "alias": [
+      "ricitos",
+      "ricito"
+    ],
+    "tamano": "bolsa pequeña",
+    "descripcion": "Boquitas de maíz inflado sabor queso.",
+    "etiquetas": [
+      "salado",
+      "queso"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "A3"
+  },
+  {
+    "id": "papalinas",
+    "nombre": "Papalinas Clásicas",
+    "precio": 6,
+    "existencias": 6,
+    "categoria": "chips",
+    "alias": [
+      "papalinas",
+      "papalina",
+      "papas",
+      "papitas",
+      "lays"
+    ],
+    "tamano": "bolsa pequeña",
+    "descripcion": "Papas fritas con sal.",
+    "etiquetas": [
+      "salado",
+      "crujiente"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "A4"
+  },
+  {
+    "id": "mani",
+    "nombre": "Maní Salado",
+    "precio": 5,
+    "existencias": 4,
+    "categoria": "chips",
+    "alias": [
+      "mani",
+      "manias",
+      "cacahuate",
+      "cacahuates"
+    ],
+    "tamano": "bolsa pequeña",
+    "descripcion": "Maní tostado con sal.",
+    "etiquetas": [
+      "salado"
+    ],
+    "alergenos": [
+      "maní"
+    ],
+    "destacado": false,
+    "casilla": "A5"
+  },
+  {
+    "id": "snickers",
+    "nombre": "Snickers",
+    "precio": 9,
+    "existencias": 5,
+    "categoria": "dulces",
+    "alias": [
+      "snickers",
+      "snicker",
+      "esnickers"
+    ],
+    "tamano": "barra",
+    "descripcion": "Barra de chocolate con maní y caramelo.",
+    "etiquetas": [
+      "dulce",
+      "chocolate"
+    ],
+    "alergenos": [
+      "maní",
+      "leche"
+    ],
+    "destacado": false,
+    "casilla": "B1"
+  },
+  {
+    "id": "chiky",
+    "nombre": "Galletas Chiky",
+    "precio": 3,
+    "existencias": 11,
+    "categoria": "dulces",
+    "alias": [
+      "chiky",
+      "chikys",
+      "chiki",
+      "chikis"
+    ],
+    "tamano": "paquete",
+    "descripcion": "Galletas cubiertas de chocolate.",
+    "etiquetas": [
+      "dulce",
+      "chocolate",
+      "galleta"
+    ],
+    "alergenos": [],
+    "destacado": true,
+    "casilla": "B2"
+  },
+  {
+    "id": "gomitas",
+    "nombre": "Gomitas",
+    "precio": 5,
+    "existencias": 1,
+    "categoria": "dulces",
+    "alias": [
+      "gomitas",
+      "gomas",
+      "gomita"
+    ],
+    "tamano": "bolsa pequeña",
+    "descripcion": "Gomitas de frutas surtidas.",
+    "etiquetas": [
+      "dulce",
+      "frutal"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "B3"
+  },
+  {
+    "id": "granola",
+    "nombre": "Barra de Granola",
+    "precio": 6,
+    "existencias": 6,
+    "categoria": "dulces",
+    "alias": [
+      "granola",
+      "barrita",
+      "barra de granola"
+    ],
+    "tamano": "barra",
+    "descripcion": "Barra de avena con miel.",
+    "etiquetas": [
+      "dulce",
+      "avena"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "B4"
+  },
+  {
+    "id": "coca",
+    "nombre": "Coca-Cola",
+    "precio": 8,
+    "existencias": 6,
+    "categoria": "bebidas",
+    "alias": [
+      "coca",
+      "coca cola",
+      "coquita",
+      "cocacola"
+    ],
+    "tamano": "lata de 355 mililitros",
+    "descripcion": "Gaseosa de cola bien fría.",
+    "etiquetas": [
+      "bebida fría",
+      "gaseosa",
+      "con azúcar",
+      "con cafeína"
+    ],
+    "alergenos": [],
+    "destacado": true,
+    "casilla": "C1"
+  },
+  {
+    "id": "coca-sin-azucar",
+    "nombre": "Coca-Cola Sin Azúcar",
+    "precio": 8,
+    "existencias": 4,
+    "categoria": "bebidas",
+    "alias": [
+      "coca sin azucar",
+      "coca zero",
+      "coca light",
+      "coca dieta"
+    ],
+    "tamano": "lata de 355 mililitros",
+    "descripcion": "Gaseosa de cola sin azúcar.",
+    "etiquetas": [
+      "bebida fría",
+      "gaseosa",
+      "sin azúcar",
+      "con cafeína"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "C2"
+  },
+  {
+    "id": "agua",
+    "nombre": "Agua Pura",
+    "precio": 5,
+    "existencias": 6,
+    "categoria": "bebidas",
+    "alias": [
+      "agua",
+      "agüita",
+      "agua pura",
+      "aguita"
+    ],
+    "tamano": "botella de 600 mililitros",
+    "descripcion": "Agua purificada.",
+    "etiquetas": [
+      "bebida fría",
+      "sin azúcar"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "C3"
+  },
+  {
+    "id": "gatorade",
+    "nombre": "Gatorade",
+    "precio": 12,
+    "existencias": 3,
+    "categoria": "bebidas",
+    "alias": [
+      "gatorade",
+      "gatorei",
+      "suero"
+    ],
+    "tamano": "botella de 600 mililitros",
+    "descripcion": "Bebida hidratante para después del ejercicio.",
+    "etiquetas": [
+      "bebida fría",
+      "hidratante",
+      "con azúcar"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "C4"
+  },
+  {
+    "id": "jugo",
+    "nombre": "Jugo de Naranja",
+    "precio": 7,
+    "existencias": 0,
+    "categoria": "bebidas",
+    "alias": [
+      "jugo",
+      "juguito",
+      "jugo de naranja"
+    ],
+    "tamano": "caja de 330 mililitros",
+    "descripcion": "Jugo de naranja.",
+    "etiquetas": [
+      "bebida fría",
+      "frutal"
+    ],
+    "alergenos": [],
+    "destacado": false,
+    "casilla": "C5"
+  }
+]

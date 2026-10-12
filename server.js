@@ -87,15 +87,17 @@ function serveStatic(pathname, res) {
   });
 }
 
-// Modo máquina expendedora: /vending/* se reenvía al sistema de la máquina (vending/server.js).
-// Solo la API pública: la administración se usa directamente en el puerto de la máquina.
-async function proxyVending(req, res, pathname, search) {
-  const target = pathname.replace(/^\/vending/, '');
-  if (!target.startsWith('/api/') || target.startsWith('/api/admin')) return json(res, 404, { error: 'No encontrado' });
+// Modo cajero de máquina expendedora: /cajero/api/* se reenvía al cajero (cajero/server.js).
+// Solo las rutas que usa el avatar; los eventos de tu programa y las pruebas van directo al cajero.
+const CAJERO_ROUTES = new Set(['GET /api/persona', 'GET /api/display', 'POST /api/greet', 'POST /api/turn', 'GET /api/events']);
+
+async function proxyCajero(req, res, pathname, search) {
+  const target = pathname.replace(/^\/cajero/, '');
+  if (!CAJERO_ROUTES.has(`${req.method} ${target}`)) return json(res, 404, { error: 'No encontrado' });
   const body = req.method === 'POST' ? await readBody(req) : undefined;
   const ctrl = new AbortController();
   res.on('close', () => { if (!res.writableFinished) ctrl.abort(); });
-  const upstream = await fetch(process.env.VENDING_URL.replace(/\/$/, '') + target + search, {
+  const upstream = await fetch(process.env.CAJERO_URL.replace(/\/$/, '') + target + search, {
     method: req.method,
     headers: req.headers['content-type'] ? { 'Content-Type': req.headers['content-type'] } : {},
     body,
@@ -113,9 +115,9 @@ async function handler(req, res) {
   const { pathname, search } = new URL(req.url, 'http://localhost');
   try {
     if (pathname === '/api/status') {
-      return json(res, 200, { serverKey: Boolean(process.env.GROQ_API_KEY), vending: Boolean(process.env.VENDING_URL) });
+      return json(res, 200, { serverKey: Boolean(process.env.GROQ_API_KEY), vending: Boolean(process.env.CAJERO_URL) });
     }
-    if (process.env.VENDING_URL && pathname.startsWith('/vending/')) return await proxyVending(req, res, pathname, search);
+    if (process.env.CAJERO_URL && pathname.startsWith('/cajero/')) return await proxyCajero(req, res, pathname, search);
     if (pathname === '/api/ms-voices') return json(res, 200, await msVoices());
     if (req.method === 'POST' && pathname === '/api/ms-tts') {
       const { text, voice, rate, pitch } = JSON.parse(await readBody(req));

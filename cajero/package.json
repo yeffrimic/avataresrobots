@@ -1,0 +1,15 @@
+{
+  "name": "cajero-avatar",
+  "version": "2.0.0",
+  "description": "El cajero de la máquina expendedora: conversa con el cliente y le pasa los pedidos a tu programa de inventario por API",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "simulador": "node simulador/servidor.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulador de inventario</title>
+  <link rel="icon" href="data:," />
+  <style>
+    :root { --bg: #f4f5f7; --card: #fff; --text: #16181d; --muted: #6b7280; --line: #e3e5ea; --accent: #2563eb; --ok: #16a34a; --bad: #dc2626; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0f1115; --card: #171a21; --text: #e8eaf0; --muted: #9aa1b1; --line: #2a2f3a; --accent: #6b9bff; --ok: #3ccf6e; --bad: #f05252; color-scheme: dark; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px; background: var(--bg); color: var(--text); font: 14.5px/1.5 system-ui, "Segoe UI", sans-serif; }
+    main { max-width: 1100px; margin: 0 auto; display: grid; gap: 16px; }
+    h1 { font-size: 20px; margin: 0; } h2 { font-size: 15px; margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+    .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    button { font: inherit; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: inherit; cursor: pointer; font-weight: 600; }
+    button.pay { background: var(--ok); border-color: var(--ok); color: #fff; }
+    button.no { color: var(--bad); }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { font-size: 12.5px; color: var(--muted); }
+    .estado { font-weight: 700; }
+    .esperando_pago { color: #d97706; } .pagado, .despachando { color: var(--accent); } .entregado { color: var(--ok); } .fallido, .cancelado, .vencido, .rechazado { color: var(--bad); }
+    .keys { display: flex; flex-wrap: wrap; gap: 6px; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="row" style="justify-content: space-between">
+      <div><h1>Simulador del programa de inventario</h1><span class="muted">Hace lo que haría tu programa: recibir pedidos, cobrar y despachar.</span></div>
+      <span class="muted" id="mode"></span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h2>Pedidos que envió el cajero</h2>
+        <table><thead><tr><th>Pedido</th><th>Productos</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody id="orders"></tbody></table>
+      </div>
+      <div style="display: grid; gap: 16px; align-content: start">
+        <div class="card">
+          <h2>Botones físicos de la máquina</h2>
+          <div class="keys" id="keys"></div>
+          <p class="muted" id="keysNote" style="margin: 10px 0 0">Le avisan al cajero con el evento «boton».</p>
+        </div>
+        <div class="card">
+          <h2>Pruebas</h2>
+          <label class="row"><input type="checkbox" id="fail" /> Que falle el despacho del primer producto (para probar reembolsos)</label>
+          <div class="row" style="margin-top: 10px"><button id="refill">Rellenar existencias</button></div>
+        </div>
+        <div class="card">
+          <h2>Existencias</h2>
+          <table><tbody id="stock"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    let products = [];
+    async function load() {
+      const [st, prods] = await Promise.all([fetch('/simulador/estado').then((r) => r.json()), fetch('/productos').then((r) => r.json())]);
+      products = prods;
+      const name = (id) => products.find((p) => p.id === id)?.nombre || id;
+      $('#mode').textContent = `${st.avisaAlCajero ? 'Avisa al cajero al instante' : 'El cajero consulta cada segundo'}${st.autopagoMs ? ` · pago automático a los ${st.autopagoMs / 1000} s` : ''}`;
+      $('#fail').checked = st.falla;
+      $('#orders').innerHTML = st.pedidos.map((o) => `<tr>
+        <td><b>${esc(o.id)}</b><br><span class="muted">${new Date(o.creado).toLocaleTimeString()}</span></td>
+        <td>${o.items.map((i) => `${i.cantidad} × ${esc(name(i.id))}`).join('<br>')}</td>
+        <td>Q${o.total.toFixed(2)}</td>
+        <td class="estado ${o.estado}">${o.estado.replace('_', ' ')}${o.reembolso ? `<br><span class="muted">reembolso Q${o.reembolso.toFixed(2)}</span>` : ''}</td>
+        <td>${o.estado === 'esperando_pago' ? `<button class="pay" data-pay="${esc(o.id)}">Confirmar pago</button> <button class="no" data-no="${esc(o.id)}">Rechazar</button>` : ''}</td>
+      </tr>`).join('') || '<tr><td colspan="5" class="muted">Todavía no hay pedidos. Pide algo al avatar y di «pagar».</td></tr>';
+      $('#stock').innerHTML = products.map((p) => `<tr><td>${esc(p.casilla || '')}</td><td>${esc(p.nombre)}</td><td style="text-align:right"><b>${p.existencias}</b></td></tr>`).join('');
+      $('#keys').innerHTML = [...products.filter((p) => p.casilla).map((p) => p.casilla), 'OK', 'CANCEL'].map((k) => `<button data-key="${esc(k)}">${esc(k)}</button>`).join('');
+      if (!st.avisaAlCajero) $('#keysNote').textContent = 'Para que los botones lleguen al cajero, arranca el simulador con CAJERO_URL=http://localhost:4000.';
+    }
+    document.addEventListener('click', async (e) => {
+      const t = e.target;
+      if (t.dataset.pay) await post(`/simulador/pagar/${t.dataset.pay}`);
+      else if (t.dataset.no) await post(`/simulador/rechazar/${t.dataset.no}`);
+      else if (t.dataset.key) await post('/simulador/boton', ['OK', 'CANCEL'].includes(t.dataset.key) ? { boton: t.dataset.key } : { casilla: t.dataset.key });
+      else if (t.id === 'refill') await post('/simulador/rellenar');
+      else return;
+      load();
+    });
+    $('#fail').addEventListener('change', (e) => post('/simulador/falla', { activa: e.target.checked }));
+    load();
+    setInterval(load, 1500);
+  </script>
+</body>
+</html>

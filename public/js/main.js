@@ -797,15 +797,15 @@ $('#btnTestVoice').addEventListener('click', async () => {
 $('#btnClear').addEventListener('click', () => clearConversation());
 
 // ---------- Modo máquina expendedora ----------
-// Toda la lógica (catálogo, cobro, despacho) vive en vending/server.js. El avatar solo le pasa
+// La conversación de venta vive en cajero/server.js, que habla con tu programa de inventario. El avatar solo le pasa
 // lo que dijo el cliente y dice exactamente lo que la máquina responde.
 async function setupVending() {
   try {
-    const persona = await (await fetch('/vending/api/persona')).json();
+    const persona = await (await fetch('/cajero/api/persona')).json();
     vending = { persona, greeted: false };
   } catch (e) {
     console.error(e);
-    toast('No pude conectar con el sistema de la máquina (VENDING_URL).', true);
+    toast('No pude conectar con el cajero (CAJERO_URL).', true);
     return;
   }
   const p = vending.persona;
@@ -818,7 +818,7 @@ async function setupVending() {
   subtitle('', p.greeting);
   fadeSubtitles(8000);
 
-  const events = new EventSource('/vending/api/events');
+  const events = new EventSource('/cajero/api/events');
   events.addEventListener('display', (e) => renderTicket(JSON.parse(e.data)));
   events.addEventListener('say', (e) => vendingSay(JSON.parse(e.data)));
 }
@@ -827,7 +827,7 @@ async function respondVending(text, my) {
   logMessage('user', text);
   subtitle(text, '');
   setState('thinking');
-  const res = await fetch('/vending/api/turn', {
+  const res = await fetch('/cajero/api/turn', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
@@ -862,7 +862,7 @@ async function vendingGreet() {
   if (!vending || vending.greeted) return;
   vending.greeted = true;
   try {
-    const r = await (await fetch('/vending/api/greet', { method: 'POST' })).json();
+    const r = await (await fetch('/cajero/api/greet', { method: 'POST' })).json();
     vendingSay(r);
   } catch { /* sin saludo */ }
 }

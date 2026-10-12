@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cajero · Pruebas</title>
+  <link rel="icon" href="data:," />
+  <style>
+    :root { --bg: #f4f5f7; --card: #fff; --text: #16181d; --muted: #6b7280; --line: #e3e5ea; --accent: #e8700f; --soft: #fff1e4; --ok: #16a34a; --bad: #dc2626; color-scheme: light; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0f1115; --card: #171a21; --text: #e8eaf0; --muted: #9aa1b1; --line: #2a2f3a; --accent: #ff8a2b; --soft: #3a2614; --ok: #3ccf6e; --bad: #f05252; color-scheme: dark; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px; background: var(--bg); color: var(--text); font: 14.5px/1.5 system-ui, "Segoe UI", sans-serif; }
+    main { max-width: 1000px; margin: 0 auto; display: grid; gap: 16px; grid-template-columns: 1.4fr 1fr; align-items: start; }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+    h1 { font-size: 20px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+    .chat { display: grid; gap: 8px; max-height: 480px; overflow-y: auto; margin-bottom: 10px; }
+    .b { padding: 9px 12px; border-radius: 12px; max-width: 88%; }
+    .me { justify-self: end; background: var(--soft); }
+    .bot { background: var(--bg); }
+    .b small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+    pre { margin: 6px 0 0; font: 12px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; color: var(--muted); }
+    form { display: flex; gap: 8px; }
+    input { flex: 1; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: inherit; }
+    button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+    .ok { background: var(--ok); } .bad { background: var(--bad); }
+    table { width: 100%; border-collapse: collapse; } td { padding: 5px 0; border-bottom: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>Probar el cajero</h1>
+      <p class="muted" style="margin-top:0">Escribe como un cliente. Debajo de cada respuesta verás cómo se entendió y si se dijo con estilo o el borrador exacto. Usa el pedido real: si dices «pagar», el pedido llega a tu programa de inventario.</p>
+      <div class="chat" id="chat"></div>
+      <form id="f"><input id="t" placeholder="¿Qué tenés de tomar?" autocomplete="off" /><button>Enviar</button></form>
+    </section>
+    <aside style="display:grid; gap:16px">
+      <div class="card"><h2>Conexiones</h2><div id="status" class="muted">Cargando…</div></div>
+      <div class="card"><h2>Pedido actual</h2><div id="order" class="muted">—</div></div>
+    </aside>
+  </main>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    const add = (html) => { $('#chat').insertAdjacentHTML('beforeend', html); $('#chat').scrollTop = 1e9; };
+
+    function showOrder(d) {
+      $('#order').innerHTML = `<b>${esc(d.label)}</b>${d.orderId ? ` · pedido ${esc(d.orderId)}` : ''}
+        ${d.items.length ? `<table>${d.items.map((i) => `<tr><td>${i.qty} × ${esc(i.name)}</td><td style="text-align:right">${esc(i.subtotal)}</td></tr>`).join('')}
+        <tr><td><b>Total</b></td><td style="text-align:right"><b>${esc(d.total)}</b></td></tr></table>` : ''}`;
+    }
+
+    async function status() {
+      const s = await fetch('/api/estado').then((r) => r.json());
+      const i = s.inventario;
+      $('#status').innerHTML = `<div><span class="dot ${i.conectado ? 'ok' : 'bad'}"></span>Inventario: ${esc(i.url)} · ${i.conectado ? `${i.productos} productos` : `sin conexión${i.error ? ` (${esc(i.error)})` : ''}`}</div>
+        <div><span class="dot ${s.modelo ? 'ok' : 'bad'}"></span>Modelo de lenguaje: ${s.modelo ? 'activo' : 'apagado (dice los borradores)'}</div>`;
+      showOrder(s.pedido);
+    }
+
+    $('#f').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = $('#t').value.trim();
+      if (!text) return;
+      $('#t').value = '';
+      add(`<div class="b me">${esc(text)}</div>`);
+      const r = await fetch('/api/probar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }).then((x) => x.json());
+      if (r.error) return add(`<div class="b bot">Error: ${esc(r.error)}</div>`);
+      const d = r.debug;
+      const how = d.source === 'modelo' ? 'entendido por el modelo' : d.source === 'atajo' ? 'atajo directo' : `reglas de respaldo${d.llmError ? ` (${d.llmError})` : ''}`;
+      const used = d.styled ? (d.validation?.ok ? '✔ con estilo' : `✘ estilo rechazado (${d.validation?.reason}): se dijo el borrador`) : 'borrador exacto';
+      add(`<div class="b bot">${esc(r.say)}<small>${esc(how)} · «${esc(d.nlu.intent)}» · ${esc(used)}</small>
+        <details><summary class="muted">detalle</summary><pre>${esc(JSON.stringify({ entendido: d.nlu, borrador: d.draft, estilo: d.styled }, null, 2))}</pre></details></div>`);
+      showOrder(r.display);
+    });
+
+    // Lo que el cajero anuncia por su cuenta (pago recibido, entregado…)
+    const es = new EventSource('/api/events');
+    es.addEventListener('say', (e) => { const d = JSON.parse(e.data); add(`<div class="b bot">🔊 ${esc(d.say)}<small>aviso del cajero</small></div>`); });
+    es.addEventListener('display', (e) => showOrder(JSON.parse(e.data)));
+    status();
+    setInterval(status, 3000);
+  </script>
+</body>
+</html>

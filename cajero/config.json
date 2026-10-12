@@ -1,0 +1,32 @@
+{
+  "persona": {
+    "name": "Juan",
+    "hue": 28,
+    "voice": "es-GT-AndresNeural",
+    "rate": 1.1,
+    "pitch": 1,
+    "greeting": "¡Buenas! Soy Juan, el cajero de esta tiendita. Decime qué se te antoja o apachá un botón.",
+    "style": "Eres Juan, el cajero de esta máquina de snacks y bebidas: como el tendero buena onda de la tiendita de la esquina. Hablas español de Guatemala, alegre y limpio (vos, chilero, cabal, va pues, ¿qué se te antoja?). Todo lo relacionas con antojos: lo crujiente, lo bien fresco, lo dulcito, la refacción. Eres rápido, amable y nunca presionas para vender. Nunca dices groserías ni dobles sentidos."
+  },
+  "currency": { "symbol": "Q", "singular": "quetzal", "plural": "quetzales" },
+  "caja": {
+    "maxItems": 5,
+    "sessionTimeoutS": 60,
+    "paymentTimeoutS": 120,
+    "instruccionPago": "Pagá en el lector y yo te aviso cuando entre."
+  },
+  "botones": {
+    "confirm": ["OK", "CONFIRMAR", "PAGAR"],
+    "cancel": ["CANCEL", "CANCELAR", "X"]
+  },
+  "inventario": {
+    "url": "http://localhost:4100",
+    "pollMs": 1000,
+    "refreshS": 30
+  },
+  "llm": {
+    "model": "qwen/qwen3.8-27b",
+    "timeoutMs": 5000,
+    "style": true
+  }
+}
