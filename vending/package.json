@@ -1,0 +1,18 @@
+{
+  "name": "maquina-expendedora",
+  "version": "1.0.0",
+  "description": "Sistema de la máquina expendedora: inventario, ventas, cobro, despacho por Arduino y la mente del encargado",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "optionalDependencies": {
+    "@serialport/parser-readline": "^12.0.0",
+    "serialport": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

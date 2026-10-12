@@ -87,10 +87,35 @@ function serveStatic(pathname, res) {
   });
 }
 
+// Modo máquina expendedora: /vending/* se reenvía al sistema de la máquina (vending/server.js).
+// Solo la API pública: la administración se usa directamente en el puerto de la máquina.
+async function proxyVending(req, res, pathname, search) {
+  const target = pathname.replace(/^\/vending/, '');
+  if (!target.startsWith('/api/') || target.startsWith('/api/admin')) return json(res, 404, { error: 'No encontrado' });
+  const body = req.method === 'POST' ? await readBody(req) : undefined;
+  const ctrl = new AbortController();
+  res.on('close', () => { if (!res.writableFinished) ctrl.abort(); });
+  const upstream = await fetch(process.env.VENDING_URL.replace(/\/$/, '') + target + search, {
+    method: req.method,
+    headers: req.headers['content-type'] ? { 'Content-Type': req.headers['content-type'] } : {},
+    body,
+    signal: ctrl.signal,
+  });
+  res.writeHead(upstream.status, {
+    'Content-Type': upstream.headers.get('content-type') || 'application/json',
+    'Cache-Control': 'no-cache',
+  });
+  if (!upstream.body) return res.end();
+  Readable.fromWeb(upstream.body).on('error', () => res.end()).pipe(res);
+}
+
 async function handler(req, res) {
-  const { pathname } = new URL(req.url, 'http://localhost');
+  const { pathname, search } = new URL(req.url, 'http://localhost');
   try {
-    if (pathname === '/api/status') return json(res, 200, { serverKey: Boolean(process.env.GROQ_API_KEY) });
+    if (pathname === '/api/status') {
+      return json(res, 200, { serverKey: Boolean(process.env.GROQ_API_KEY), vending: Boolean(process.env.VENDING_URL) });
+    }
+    if (process.env.VENDING_URL && pathname.startsWith('/vending/')) return await proxyVending(req, res, pathname, search);
     if (pathname === '/api/ms-voices') return json(res, 200, await msVoices());
     if (req.method === 'POST' && pathname === '/api/ms-tts') {
       const { text, voice, rate, pitch } = JSON.parse(await readBody(req));

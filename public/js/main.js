@@ -51,7 +51,13 @@ const saveCustoms = () => store.set('avatar.customPersonalities', customs);
 // ---------- Núcleo ----------
 const avatar = new Avatar($('#stage'));
 const lipsync = new LipSync(avatar);
-const speaker = new Speaker({ lipsync, settings: () => settings });
+// En modo máquina, la voz la define el sistema de la máquina (sin tocar los ajustes guardados)
+const speaker = new Speaker({
+  lipsync,
+  settings: () => (vending
+    ? { ...settings, voiceEngine: 'microsoft', msVoice: vending.persona.voice, rate: vending.persona.rate, pitch: vending.persona.pitch }
+    : settings),
+});
 const mic = new Mic();
 groq.setClientKey(settings.apiKey);
 
@@ -64,6 +70,7 @@ let uiState = 'idle';
 let camStream = null;
 let camFacing = 'user';
 let serverKey = false;
+let vending = null; // modo máquina expendedora: { persona }
 
 const LABELS = {
   idle: 'En espera',
@@ -245,8 +252,11 @@ function updateKeyStatus() {
 }
 
 async function checkStatus() {
-  try { serverKey = (await (await fetch('/api/status')).json()).serverKey; } catch { serverKey = false; }
+  let status = {};
+  try { status = await (await fetch('/api/status')).json(); } catch { /* servidor no disponible */ }
+  serverKey = Boolean(status.serverKey);
   updateKeyStatus();
+  if (status.vending) await setupVending();
   if (!serverKey && !settings.apiKey) {
     openPanel('settingsPanel');
     toast('Agrega tu API key de Groq aquí abajo (o en el archivo .env del servidor).');
@@ -423,6 +433,7 @@ function buildMessages() {
 }
 
 async function respond(text, my) {
+  if (vending) return respondVending(text, my);
   const images = attachments.splice(0, 4);
   renderAttachments();
   const cam = camStream && (settings.camEveryTurn || LOOK_WORDS.test(text) || !text) ? captureFrame() : null;
@@ -559,6 +570,7 @@ $('#btnMic').addEventListener('click', async () => {
   conversation = true;
   $('#btnMic').classList.add('on');
   if (!turn && !speaker.playing) restState();
+  vendingGreet();
 });
 
 async function startPTT() {
@@ -669,6 +681,7 @@ async function imageToDataURL(file, max = 1280) {
 }
 
 async function addImages(files) {
+  if (vending) return; // la máquina no recibe imágenes
   for (const f of files) {
     if (!f.type.startsWith('image/')) continue;
     if (attachments.length >= 4) { toast('Máximo 4 imágenes por mensaje.'); break; }
@@ -782,6 +795,89 @@ $('#btnTestVoice').addEventListener('click', async () => {
   if (my === turn) { turn = null; restState(); }
 });
 $('#btnClear').addEventListener('click', () => clearConversation());
+
+// ---------- Modo máquina expendedora ----------
+// Toda la lógica (catálogo, cobro, despacho) vive en vending/server.js. El avatar solo le pasa
+// lo que dijo el cliente y dice exactamente lo que la máquina responde.
+async function setupVending() {
+  try {
+    const persona = await (await fetch('/vending/api/persona')).json();
+    vending = { persona, greeted: false };
+  } catch (e) {
+    console.error(e);
+    toast('No pude conectar con el sistema de la máquina (VENDING_URL).', true);
+    return;
+  }
+  const p = vending.persona;
+  document.body.classList.add('vending');
+  $('#avatarName').textContent = p.name;
+  document.title = `${p.name} · Máquina`;
+  avatar.setHue(p.hue ?? 28);
+  document.documentElement.style.setProperty('--hue', p.hue ?? 28);
+  stopCam();
+  subtitle('', p.greeting);
+  fadeSubtitles(8000);
+
+  const events = new EventSource('/vending/api/events');
+  events.addEventListener('display', (e) => renderTicket(JSON.parse(e.data)));
+  events.addEventListener('say', (e) => vendingSay(JSON.parse(e.data)));
+}
+
+async function respondVending(text, my) {
+  logMessage('user', text);
+  subtitle(text, '');
+  setState('thinking');
+  const res = await fetch('/vending/api/turn', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+    signal: my.ctrl.signal,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Máquina: ${data.error || res.status}`);
+  if (my !== turn) return;
+  renderTicket(data.display);
+  logMessage('bot', data.say);
+  subtitle(undefined, data.say);
+  speaker.enqueue(cleanForSpeech(data.say), data.emotion);
+  await speaker.waitIdle();
+  if (my === turn) {
+    turn = null;
+    restState();
+    fadeSubtitles();
+  }
+}
+
+// Lo que la máquina dice por su cuenta: botones físicos, despacho terminado, pedido vencido…
+function vendingSay(data) {
+  if (data.display) renderTicket(data.display);
+  if (!data.say) return;
+  logMessage('bot', data.say);
+  subtitle('', data.say);
+  speaker.enqueue(cleanForSpeech(data.say), data.emotion);
+  speaker.waitIdle().then(() => { if (!turn) { restState(); fadeSubtitles(); } });
+}
+
+async function vendingGreet() {
+  if (!vending || vending.greeted) return;
+  vending.greeted = true;
+  try {
+    const r = await (await fetch('/vending/api/greet', { method: 'POST' })).json();
+    vendingSay(r);
+  } catch { /* sin saludo */ }
+}
+
+function renderTicket(d) {
+  const box = $('#ticket');
+  if (!vending || !d) return;
+  box.hidden = !d.items?.length && d.state === 'idle';
+  if (box.hidden) return;
+  $('#ticketLabel').textContent = d.label;
+  $('#ticketItems').innerHTML = d.items.map((i) =>
+    `<li><span>${i.qty} × ${esc(i.name)}</span><b>${esc(i.subtotal)}</b></li>`).join('');
+  $('#ticketTotal').textContent = d.total;
+  box.dataset.state = d.state;
+}
 
 // ---------- Inicio ----------
 applyPersonality();

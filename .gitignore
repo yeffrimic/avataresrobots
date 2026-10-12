@@ -1,3 +1,6 @@
 .env
 node_modules/
 certs/
+vending/data/
+vending/node_modules/
+vending/.env

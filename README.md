@@ -18,6 +18,7 @@ Una cabeza robot en 3D, flotando en el espacio, con la que hablas por voz. Puede
 - [Usar tu propia cabeza 3D](#usar-tu-propia-cabeza-3d)
 - [Plataformas](#plataformas)
   - [Desde el móvil](#desde-el-móvil)
+- [Modo máquina expendedora](#modo-máquina-expendedora)
 - [Solución de problemas](#solución-de-problemas)
 
 ## Requisitos
@@ -126,6 +127,17 @@ Abre esa dirección en el móvil. Saldrá un aviso de seguridad porque el certif
 **B. Con un túnel** (enlace HTTPS válido, también sirve fuera de tu red): `cloudflared tunnel --url http://localhost:3000`. Cualquiera que tenga el enlace podrá usar tu avatar y tu clave de Groq, así que ciérralo al terminar.
 
 En el móvil no hay tecla Espacio: usa el botón del micrófono para hablar con las manos libres.
+
+## Modo máquina expendedora
+
+El avatar puede ser **el encargado de una máquina de snacks y bebidas**. Toda la logística (catálogo, existencias, cobro con código, despacho por Arduino, ventas) vive en un sistema aparte, en [`vending/`](vending/README.md). El avatar solo escucha al cliente, le pasa el texto a ese sistema y dice lo que este responde, con un ticket del pedido en pantalla. El sistema está diseñado para no inventar precios, productos ni datos.
+
+```
+cd vending && npm start      # sistema de la máquina en :4000 (panel en /admin)
+npm start                    # el avatar, con VENDING_URL=http://localhost:4000 en .env
+```
+
+Todos los detalles están en [vending/README.md](vending/README.md).
 
 ## Solución de problemas
 
